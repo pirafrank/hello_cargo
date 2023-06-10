@@ -1,0 +1,52 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug exec 'hello_cargo hi'",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=hello_cargo",
+          "--package=pf_hello_cargo"
+        ],
+        "filter": {
+          "name": "hello_cargo",
+          "kind": "bin"
+        }
+      },
+      "args": [
+        "hi",
+        "--name",
+        "John"
+      ],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug exec 'hello_cargo hello'",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=hello_cargo",
+          "--package=pf_hello_cargo"
+        ],
+        "filter": {
+          "name": "hello_cargo",
+          "kind": "bin"
+        }
+      },
+      "args": [
+        "hello",
+        "--name",
+        "Jane"
+      ],
+      "cwd": "${workspaceFolder}"
+    },
+  ]
+}

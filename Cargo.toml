@@ -1,0 +1,23 @@
+[package]
+name = "pf_hello_cargo"
+authors = ["Francesco Pira (pirafrank)"]
+version = "0.1.0"
+edition = "2021"
+repository = "https://github.com/pirafrank/hello_cargo"
+documentation = "https://github.com/pirafrank/hello_cargo/blob/main/README.md"
+description = "hello_cargo is a dummy tool"
+license = "MIT"
+readme = "README.md"
+rust-version = "1.78.0"
+build = "build.rs"
+exclude = ["test_assets/*", "/.vscode/*", "/.github/*"]
+
+[dependencies]
+clap = { version = "4.4", features = ["derive"] }
+
+[build-dependencies]
+chrono = "0.4"
+
+[[bin]]
+name = "hello_cargo"
+path = "src/main.rs"

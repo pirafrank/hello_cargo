@@ -1,0 +1,2 @@
+Rust code is release with do-whatever-you-want license.
+No warranty, no liability, no anything.
