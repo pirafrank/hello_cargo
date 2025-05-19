@@ -10,6 +10,9 @@ on:
 permissions:
   contents: write
 
+env:
+  BIN_NAME: hello_cargo
+
 jobs:
   checks:
     name: Checks
@@ -117,13 +120,13 @@ jobs:
           FILENAMEBASE="${{ needs.checks.outputs.APP_NAME }}-${{ needs.checks.outputs.APP_VERSION }}-${{ matrix.target }}"
           cp LICENSE.txt README.md CHANGELOG.md _temp/release/
           if [[ "$RUNNER_OS" == "Windows" ]]; then
-            cp target/${{ matrix.target }}/release/hello_cargo.exe _temp/release/
+            cp target/${{ matrix.target }}/release/${{ env.BIN_NAME }}.exe _temp/release/
             cd _temp/release
             7z a -tzip ../${FILENAMEBASE}.zip *
             echo "archive_name=${FILENAMEBASE}.zip" >> $GITHUB_OUTPUT
             echo "archive_path=_temp/${FILENAMEBASE}.zip" >> $GITHUB_OUTPUT
           else
-            cp target/${{ matrix.target }}/release/hello_cargo _temp/release/
+            cp target/${{ matrix.target }}/release/${{ env.BIN_NAME }} _temp/release/
             cd _temp/release
             tar -czvf ../${FILENAMEBASE}.tar.gz * > /dev/null
             echo "archive_name=${FILENAMEBASE}.tar.gz" >> $GITHUB_OUTPUT
@@ -158,7 +161,7 @@ jobs:
           name: ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
           body: |
-            Release notes for `${{ github.ref_name }}` are available here: https://github.com/pirafrank/hello_cargo/blob/main/CHANGELOG.md
+            Release notes for `${{ github.ref_name }}` are available here: https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md
           files: artifacts/**/*
           generate_release_notes: true
           draft: false

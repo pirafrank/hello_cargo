@@ -7,6 +7,9 @@ on:
       - main
   workflow_dispatch:
 
+env:
+  BIN_NAME: hello_cargo
+
 jobs:
   make_matrix:
     runs-on: ubuntu-latest
@@ -64,3 +67,12 @@ jobs:
         # https://github.com/cross-rs/cross#supported-targets
         if: ${{ !contains(matrix.target, 'freebsd') && !contains(matrix.target, 'aarch64-pc-windows-msvc') }}
         run: cargo test --verbose
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.BIN_NAME }}-${{ matrix.target }}
+          path: target/${{ matrix.target }}/debug/${{ env.BIN_NAME }}${{ contains(matrix.target, 'windows') && '.exe' || '' }}
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0  # no compression
