@@ -12,11 +12,7 @@ jobs:
     runs-on: ubuntu-24.04
 
     env:
-      PROJECT_NAME: ${{ github.event.inputs.project_name }}
       SSH_AUTH_SOCK: "/tmp/vc-runner-ssh-agent.sock"
-      BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
-      BW_SECRET_IDS: ${{ secrets.BW_SECRET_IDS }}
-      BW_SERVER_ENDPOINT: ${{ secrets.BW_SERVER_ENDPOINT }}
 
     steps:
       - name: Checkout repository
@@ -25,13 +21,12 @@ jobs:
             submodules: recursive
             ref: main
 
-      - name: Install vault-conductor
-        run: |
-            echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-            curl -sSL https://api.github.com/repos/pirafrank/vault-conductor/releases/latest | jq -r '.assets[] | select(.name | test("vault-conductor-.*-x86_64-unknown-linux-gnu\\.tar\\.gz")) | .browser_download_url' | xargs curl -sSL -o vault-conductor.tar.gz
-            tar -xzf vault-conductor.tar.gz
-            mkdir -p "$HOME/.local/bin"
-            mv vault-conductor "$HOME/.local/bin/vault-conductor"
+      - name: Setup vault-conductor
+        uses: ./.github/actions/vault-conductor
+        with:
+          bws_access_token: ${{ secrets.BWS_ACCESS_TOKEN }}
+          bw_secret_ids: ${{ secrets.BW_SECRET_IDS }}
+          bw_server_endpoint: ${{ secrets.BW_SERVER_ENDPOINT }}
 
       - name: List /tmp
         run: |
@@ -50,11 +45,6 @@ jobs:
 
       - name: Test vault-conductor
         run: |
-            echo $SSH_AUTH_SOCK
-            vault-conductor start
-            sleep 5  # give it time to start and write the socket file
-            ls -la /tmp
-            ssh-add -L
             ssh -T git@github.com || echo "SSH connection failed"
 
       - name: Test clone repository
