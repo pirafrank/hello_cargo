@@ -1,0 +1,100 @@
+name: MacPorts Portfile
+run-name: MacPorts Portfile ${{ github.ref_name }}
+
+on:
+  release:
+    # only for newly published releases, not drafts or updates to existing ones
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to package (e.g. 1.2.3, without v prefix)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  macports-portfile:
+    name: Generate and submit Portfile
+    runs-on: macos-15
+    env:
+      GH_TOKEN: ${{ secrets.GH_PAT }}
+      GIT_USER_NAME: pirafrank
+      GIT_USER_EMAIL: pirafrank@users.noreply.github.com
+      SOURCES_CONF: "/opt/local/etc/macports/sources.conf"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all tags
+
+      - name: Setup MacPorts
+        uses: melusina-org/setup-macports@v1
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Clean and sync MacPorts tree
+        run: |
+          sudo port clean all  # Clean prior fails
+          sudo port sync  # Use sync instead of selfupdate
+
+      - name: Install pipx
+        run: |
+          sudo port install pipx
+
+      - name: Install cargo2ports
+        run: |
+          pipx install git+https://github.com/herbygillot/cargo2ports.git
+
+      - name: Configure local ports tree
+        run: |
+          echo "pwd: $(pwd)"
+          echo "home: $HOME"
+          LOCAL_PORTS="file:///$HOME/pirafrank/ports [nosync]"
+          mkdir -p "$HOME/pirafrank/ports/sysutils/poof"
+          sudo bash -c "echo \"$LOCAL_PORTS\" | cat - \"$SOURCES_CONF\" > /tmp/sources.conf.tmp && mv /tmp/sources.conf.tmp \"$SOURCES_CONF\""
+          echo "Prepended '$LOCAL_PORTS' to $SOURCES_CONF"
+
+      - name: Generate Portfile
+        run: |
+          chmod +x macports/generate_portfile.sh
+          ./macports/generate_portfile.sh
+
+      - name: Test Portfile by installing the package
+        id: install
+        continue-on-error: true  # Continue even if installation fails, to capture the logs
+        # IMPORTANT: do NOT use -t (tracemode) flag here, as it will saturate the runner
+        #            resources during extraction of tar.gz sources causing the job to fail.
+        run: sudo port -vs install poof
+
+      - name: Show logs
+        if: steps.install.outcome != 'success'  # Only show logs if installation failed
+        run: cat /opt/local/var/macports/logs/_*poof*/poof/main.log || true
+
+      - name: Setup tmate session
+        if: steps.install.outcome != 'success'  # Only start tmate if installation failed
+        uses: mxschmitt/action-tmate@v3
+
+      - name: Test poof installation
+        if: steps.install.outcome == 'success'
+        run: |
+          poof --version
+
+      - name: Add Portfile to artifacts
+        if: steps.install.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Portfile
+          path: "./macports/Portfile"
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0  # no compression
+
+      - name: Submit MacPorts PR
+        if: false  # Disable PR submission for now, enable when ready
+        run: |
+          chmod +x macports/macport_pr.sh
+          ./macports/macport_pr.sh "$(pwd -P)/macports/Portfile"
