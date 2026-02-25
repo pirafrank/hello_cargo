@@ -31,15 +31,9 @@ jobs:
           fetch-depth: 0  # Fetch all tags
 
       - name: Setup MacPorts
-        uses: melusina-org/setup-macports@v1
-
-      - name: Setup Rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-
-      - name: Clean and sync MacPorts tree
         run: |
-          sudo port clean all  # Clean prior fails
-          sudo port sync  # Use sync instead of selfupdate
+          curl -LO https://raw.githubusercontent.com/GiovanniBussi/macports-ci/master/macports-ci
+          source ./macports-ci install
 
       - name: Install pipx
         run: |
@@ -57,6 +51,9 @@ jobs:
           mkdir -p "$HOME/pirafrank/ports/sysutils/poof"
           sudo bash -c "echo \"$LOCAL_PORTS\" | cat - \"$SOURCES_CONF\" > /tmp/sources.conf.tmp && mv /tmp/sources.conf.tmp \"$SOURCES_CONF\""
           echo "Prepended '$LOCAL_PORTS' to $SOURCES_CONF"
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
 
       - name: Generate Portfile
         run: |
